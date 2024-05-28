@@ -84,5 +84,10 @@ async def tiktok(ctx: discord.Interaction, url: str):
 async def youtube(ctx: discord.Interaction, url: str):
     await handle_video(ctx, url, "YouTube")
 
+@bot.tree.command(name="facebook")
+@app_commands.describe(url="The Facebook video URL")
+async def facebook(ctx: discord.Interaction, url: str):
+    await handle_video(ctx, url, "Facebook")
+
 # Add your token at the end to run the bot
 bot.run(DISCORD_BOT_TOKEN)
