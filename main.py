@@ -12,10 +12,44 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# yt-dlp options for downloading the video
-ydl_opts = {
-    'format': 'bestvideo+bestaudio/best',
-    'outtmpl': 'downloaded_video.%(ext)s'
+# Define yt-dlp options and other settings for each source
+source_settings = {
+    "youtube": {
+        "ydl_opts": {
+            'format': 'bestvideo+bestaudio/best',
+            'outtmpl': 'downloaded_video.%(ext)s'
+        },
+        "compression_settings": {
+            "scale": "640:-1",
+            "preset": "fast",
+            "bitrate": "500k",
+            "audio_bitrate": "128k"
+        }
+    },
+    "tiktok": {
+        "ydl_opts": {
+            'format': 'bestvideo+bestaudio/best',
+            'outtmpl': 'downloaded_video.%(ext)s'
+        },
+        "compression_settings": {
+            "scale": "480:-1",
+            "preset": "fast",
+            "bitrate": "400k",
+            "audio_bitrate": "96k"
+        }
+    },
+    "facebook": {
+        "ydl_opts": {
+            'format': 'bestvideo+bestaudio/best',
+            'outtmpl': 'downloaded_video.%(ext)s'
+        },
+        "compression_settings": {
+            "scale": "720:-1",
+            "preset": "fast",
+            "bitrate": "600k",
+            "audio_bitrate": "128k"
+        }
+    }
 }
 
 @bot.event
@@ -36,6 +70,10 @@ async def run_ffmpeg_command(command):
 
 # Function to handle video downloading and uploading
 async def handle_video(ctx, url, source):
+    settings = source_settings[source]
+    ydl_opts = settings["ydl_opts"]
+    compression_settings = settings["compression_settings"]
+
     try:
         await ctx.response.defer()
 
@@ -51,11 +89,12 @@ async def handle_video(ctx, url, source):
         if file_size > 8 * 1024 * 1024:  # 8MB in bytes
             await ctx.followup.send("The video is larger than 8MB, compressing the video...")
 
-            # Compress the video using ffmpeg with a faster preset
+            # Compress the video using ffmpeg with the source-specific settings
             compressed_file_path = "compressed_" + os.path.splitext(file_path)[0] + ".mp4"
             ffmpeg_command = [
-                'ffmpeg', '-i', file_path, '-vf', 'scale=640:-1', '-c:v', 'libx264', '-preset', 'fast', '-b:v', '500k',
-                '-c:a', 'aac', '-b:a', '128k', compressed_file_path
+                'ffmpeg', '-i', file_path, '-vf', f'scale={compression_settings["scale"]}', '-c:v', 'libx264', 
+                '-preset', compression_settings["preset"], '-b:v', compression_settings["bitrate"],
+                '-c:a', 'aac', '-b:a', compression_settings["audio_bitrate"], compressed_file_path
             ]
             try:
                 await run_ffmpeg_command(ffmpeg_command)
@@ -82,17 +121,17 @@ async def handle_video(ctx, url, source):
 @bot.tree.command(name="tiktok")
 @app_commands.describe(url="The TikTok video URL")
 async def tiktok(ctx: discord.Interaction, url: str):
-    await handle_video(ctx, url, "TikTok")
+    await handle_video(ctx, url, "tiktok")
 
 @bot.tree.command(name="youtube")
 @app_commands.describe(url="The YouTube video URL")
 async def youtube(ctx: discord.Interaction, url: str):
-    await handle_video(ctx, url, "YouTube")
+    await handle_video(ctx, url, "youtube")
 
 @bot.tree.command(name="facebook")
 @app_commands.describe(url="The Facebook video URL")
 async def facebook(ctx: discord.Interaction, url: str):
-    await handle_video(ctx, url, "Facebook")
+    await handle_video(ctx, url, "facebook")
 
 # Add your token at the end to run the bot
 bot.run(DISCORD_BOT_TOKEN)
