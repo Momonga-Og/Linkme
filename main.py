@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import yt_dlp
 import os
+import asyncio
 import subprocess
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
@@ -21,6 +22,17 @@ ydl_opts = {
 async def on_ready():
     await bot.tree.sync()
     print(f'Logged in as {bot.user.name}')
+
+# Function to run ffmpeg asynchronously
+async def run_ffmpeg_command(command):
+    process = await asyncio.create_subprocess_exec(
+        *command,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, command, output=stdout, stderr=stderr)
 
 # Function to handle video downloading and uploading
 async def handle_video(ctx, url, source):
@@ -46,7 +58,7 @@ async def handle_video(ctx, url, source):
                 'ffmpeg', '-i', file_path, '-vf', 'scale=640:-1', '-c:v', 'libx264', '-preset', 'fast', '-b:v', '500k',
                 '-c:a', 'aac', '-b:a', '128k', compressed_file_path
             ]
-            subprocess.run(ffmpeg_command, check=True)
+            await run_ffmpeg_command(ffmpeg_command)
 
             # Remove the original file and replace with the compressed file
             os.remove(file_path)
