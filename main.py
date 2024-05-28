@@ -4,6 +4,11 @@ import yt_dlp
 import os
 import subprocess
 
+
+DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+
+
+
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -55,4 +60,5 @@ async def tiktok(ctx, url):
     except Exception as e:
         await ctx.send(f"An error occurred: {str(e)}")
 
-bot.run('YOUR_BOT_TOKEN')
+# Add your token at the end to run the bot
+bot.run(DISCORD_BOT_TOKEN)
