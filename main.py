@@ -36,10 +36,9 @@ async def run_ffmpeg_command(command):
 
 # Function to handle video downloading and uploading
 async def handle_video(ctx, url, source):
-    # Defer the response to prevent interaction expiration
-    await ctx.response.defer()
-
     try:
+        await ctx.response.defer()
+
         await ctx.followup.send(f"Downloading the video from {source}...")
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
