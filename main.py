@@ -7,6 +7,7 @@ import asyncio
 import subprocess
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+INSTAGRAM_COOKIES_PATH = 'instagram_cookies.txt'
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -34,7 +35,8 @@ async def handle_instagram(ctx, url):
 
         ydl_opts = {
             'format': 'bestvideo+bestaudio/best',
-            'outtmpl': 'downloaded_instagram_video.%(ext)s'
+            'outtmpl': 'downloaded_instagram_video.%(ext)s',
+            'cookies': INSTAGRAM_COOKIES_PATH,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
