@@ -24,9 +24,12 @@ async def on_ready():
 
 # Function to handle video downloading and uploading
 async def handle_video(ctx, url, source):
-    await ctx.response.send_message(f"Downloading the video from {source}...")
+    # Defer the response to prevent interaction expiration
+    await ctx.response.defer()
 
     try:
+        await ctx.followup.send(f"Downloading the video from {source}...")
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             file_path = ydl.prepare_filename(info)
