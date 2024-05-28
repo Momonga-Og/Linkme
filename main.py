@@ -36,9 +36,6 @@ async def run_ffmpeg_command(command):
 
 # Function to handle video downloading and uploading
 async def handle_video(ctx, url, source):
-    if ctx.response.is_done():
-        return
-
     try:
         await ctx.response.defer()
 
