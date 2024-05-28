@@ -97,7 +97,8 @@ async def handle_video(ctx, url, source):
                 print("FFmpeg stdout:", stdout.decode())
                 print("FFmpeg stderr:", stderr.decode())
             except subprocess.CalledProcessError as e:
-                await ctx.followup.send(f"An error occurred while compressing the video: {e.stderr.decode()}")
+                error_message = e.stderr.decode()
+                await ctx.followup.send(f"An error occurred while compressing the video: {error_message}")
                 return
 
             os.remove(file_path)
