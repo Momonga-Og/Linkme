@@ -36,6 +36,9 @@ async def run_ffmpeg_command(command):
 
 # Function to handle video downloading and uploading
 async def handle_video(ctx, url, source):
+    if ctx.response.is_done():
+        return
+
     try:
         await ctx.response.defer()
 
@@ -57,7 +60,11 @@ async def handle_video(ctx, url, source):
                 'ffmpeg', '-i', file_path, '-vf', 'scale=640:-1', '-c:v', 'libx264', '-preset', 'fast', '-b:v', '500k',
                 '-c:a', 'aac', '-b:a', '128k', compressed_file_path
             ]
-            await run_ffmpeg_command(ffmpeg_command)
+            try:
+                await run_ffmpeg_command(ffmpeg_command)
+            except subprocess.CalledProcessError as e:
+                await ctx.followup.send(f"An error occurred while compressing the video: {e.stderr.decode()}")
+                return
 
             # Remove the original file and replace with the compressed file
             os.remove(file_path)
@@ -70,6 +77,8 @@ async def handle_video(ctx, url, source):
         # Clean up the downloaded and/or compressed file
         os.remove(file_path)
 
+    except discord.errors.NotFound:
+        await ctx.followup.send(f"An error occurred: Unknown interaction")
     except Exception as e:
         await ctx.followup.send(f"An error occurred: {str(e)}")
 
