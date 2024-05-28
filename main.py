@@ -5,10 +5,7 @@ import yt_dlp
 import os
 import subprocess
 
-
-
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -41,7 +38,7 @@ async def handle_video(ctx, url, source):
             await ctx.followup.send("The video is larger than 8MB, compressing the video...")
 
             # Compress the video using ffmpeg
-            compressed_file_path = "compressed_" + file_path
+            compressed_file_path = "compressed_" + os.path.splitext(file_path)[0] + ".mp4"
             ffmpeg_command = [
                 'ffmpeg', '-i', file_path, '-vf', 'scale=640:-1', '-c:v', 'libx264', '-preset', 'slow', '-b:v', '500k',
                 '-c:a', 'aac', '-b:a', '128k', compressed_file_path
@@ -71,7 +68,6 @@ async def tiktok(ctx: discord.Interaction, url: str):
 @app_commands.describe(url="The YouTube video URL")
 async def youtube(ctx: discord.Interaction, url: str):
     await handle_video(ctx, url, "YouTube")
-
 
 # Add your token at the end to run the bot
 bot.run(DISCORD_BOT_TOKEN)
