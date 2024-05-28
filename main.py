@@ -37,10 +37,10 @@ async def handle_video(ctx, url, source):
         if file_size > 8 * 1024 * 1024:  # 8MB in bytes
             await ctx.followup.send("The video is larger than 8MB, compressing the video...")
 
-            # Compress the video using ffmpeg
+            # Compress the video using ffmpeg with a faster preset
             compressed_file_path = "compressed_" + os.path.splitext(file_path)[0] + ".mp4"
             ffmpeg_command = [
-                'ffmpeg', '-i', file_path, '-vf', 'scale=640:-1', '-c:v', 'libx264', '-preset', 'slow', '-b:v', '500k',
+                'ffmpeg', '-i', file_path, '-vf', 'scale=640:-1', '-c:v', 'libx264', '-preset', 'fast', '-b:v', '500k',
                 '-c:a', 'aac', '-b:a', '128k', compressed_file_path
             ]
             subprocess.run(ffmpeg_command, check=True)
