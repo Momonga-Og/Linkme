@@ -7,7 +7,6 @@ import asyncio
 import subprocess
 import http.client
 import json
-import logging
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
@@ -57,7 +56,7 @@ source_settings = {
 @bot.event
 async def on_ready():
     await bot.tree.sync()
-    logging.info(f'Logged in as {bot.user.name}')
+    print(f'Logged in as {bot.user.name}')
 
 async def run_ffmpeg_command(command):
     process = await asyncio.create_subprocess_exec(
@@ -70,63 +69,20 @@ async def run_ffmpeg_command(command):
         raise subprocess.CalledProcessError(process.returncode, command, output=stdout, stderr=stderr)
 
 def get_instagram_reel_url(url):
-    logging.basicConfig(level=logging.DEBUG)
     conn = http.client.HTTPSConnection("instagram-downloader.p.rapidapi.com")
     headers = {
-        'x-rapidapi-key': "YOUR_RAPIDAPI_KEY",  # Replace with your RapidAPI key
+        'x-rapidapi-key': "5e6976078bmsheb89f5f8d17f7d4p1b5895jsnb31e587ad8cc",  # Replace with your RapidAPI key
         'x-rapidapi-host': "instagram-downloader.p.rapidapi.com"
     }
     endpoint = f"/index?url={url}"
     conn.request("GET", endpoint, headers=headers)
+    res = conn.getresponse()
+    data = res.read().decode("utf-8")
     
-    try:
-        res = conn.getresponse()
-        data = res.read().decode("utf-8")
-        logging.debug(f"Instagram API response: {data}")
-
-        if res.status == 200:
-            response_json = json.loads(data)
-            video_url = response_json.get('result', {}).get('video_url')
-            if video_url:
-                return video_url
-            else:
-                logging.error("No video URL found in the response")
-                return None
-        else:
-            logging.error(f"Instagram API returned status {res.status}")
-            return None
-    except Exception as e:
-        logging.error(f"Exception occurred while retrieving Instagram reel URL: {e}")
-        return None
-
-def get_tiktok_video_url(url):
-    logging.basicConfig(level=logging.DEBUG)
-    conn = http.client.HTTPSConnection("tiktok-scraper7.p.rapidapi.com")
-    headers = {
-        'x-rapidapi-key': "YOUR_RAPIDAPI_KEY",  # Replace with your RapidAPI key
-        'x-rapidapi-host': "tiktok-scraper7.p.rapidapi.com"
-    }
-    endpoint = f"/?url={url}&hd=1"
-    conn.request("GET", endpoint, headers=headers)
-    
-    try:
-        res = conn.getresponse()
-        data = res.read().decode("utf-8")
-        logging.debug(f"TikTok API response: {data}")
-
-        if res.status == 200:
-            response_json = json.loads(data)
-            video_url = response_json.get('video_url')
-            if video_url:
-                return video_url
-            else:
-                logging.error("No video URL found in the response")
-                return None
-        else:
-            logging.error(f"TikTok API returned status {res.status}")
-            return None
-    except Exception as e:
-        logging.error(f"Exception occurred while retrieving TikTok video URL: {e}")
+    if res.status == 200:
+        response_json = json.loads(data)
+        return response_json['result']['video_url']
+    else:
         return None
 
 async def handle_video(ctx, url, source):
@@ -141,11 +97,6 @@ async def handle_video(ctx, url, source):
             url = get_instagram_reel_url(url)
             if not url:
                 await ctx.followup.send("Failed to retrieve the Instagram reel URL.")
-                return
-        elif source == "tiktok":
-            url = get_tiktok_video_url(url)
-            if not url:
-                await ctx.followup.send("Failed to retrieve the TikTok video URL.")
                 return
 
         await ctx.followup.send(f"Downloading the video from {source}...")
