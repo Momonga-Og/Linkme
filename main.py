@@ -7,7 +7,7 @@ import asyncio
 import subprocess
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-INSTAGRAM_COOKIES_PATH = 'instagram_cookies.txt'
+INSTAGRAM_COOKIES_PATH = 'instagram_cookies.txt'  # Set the path to the cookies file
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -43,7 +43,7 @@ source_settings = {
         "ydl_opts": {
             'format': 'bestvideo+bestaudio/best',
             'outtmpl': 'downloaded_video.%(ext)s',
-            'cookiefile': INSTAGRAM_COOKIES_PATH,
+            'cookiefile': INSTAGRAM_COOKIES_PATH,  # Use the cookies file
         },
         "compression_settings": {
             "scale": "720:-1",
@@ -53,7 +53,6 @@ source_settings = {
         }
     }
 }
-
 
 @bot.event
 async def on_ready():
@@ -70,60 +69,6 @@ async def run_ffmpeg_command(command):
     stdout, stderr = await process.communicate()
     if process.returncode != 0:
         raise subprocess.CalledProcessError(process.returncode, command, output=stdout, stderr=stderr)
-        
-        #handle instagram
-
-async def handle_instagram(ctx, url):
-    try:
-        await ctx.response.defer()
-        await ctx.followup.send("Downloading the video from Instagram...")
-
-        ydl_opts = {
-            'format': 'bestvideo+bestaudio/best',
-            'outtmpl': 'downloaded_instagram_video.%(ext)s',
-            'cookies': INSTAGRAM_COOKIES_PATH,
-        }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            file_path = ydl.prepare_filename(info)
-            title = info.get('title', 'Unknown Title')
-
-        await ctx.followup.send(f"Uploading video: **{title}**")
-        await ctx.followup.send(file=discord.File(file_path))
-
-        os.remove(file_path)
-    except Exception as e:
-        await ctx.followup.send(f"An error occurred: {str(e)}")
-
-
-#download instgram 
-def download_instagram_video(url):
-    try:
-        result = subprocess.run(
-            [
-                'yt-dlp',
-                '--cookies', 'instagram_cookies.txt',  # Use the cookies file
-                url
-            ],
-            check=True,
-            text=True,
-            capture_output=True
-        )
-        print(result.stdout)
-    except subprocess.CalledProcessError as e:
-        print(f"Error: {e.stderr}")
-
-if __name__ == "__main__":
-    urls = [
-        "https://www.instagram.com/reel/C5hAGZEov5X/?utm_source=ig_web_copy_link",
-        "https://www.instagram.com/reel/C7bXWfVy7Ie/?utm_source=ig_web_copy_link"
-    ]
-
-    for url in urls:
-        download_instagram_video(url)
-        
-
 
 # Function to handle video downloading and uploading
 async def handle_video(ctx, url, source):
@@ -133,7 +78,6 @@ async def handle_video(ctx, url, source):
 
     try:
         await ctx.response.defer()
-
         await ctx.followup.send(f"Downloading the video from {source}...")
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
