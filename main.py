@@ -7,6 +7,7 @@ import asyncio
 import subprocess
 import http.client
 import json
+import requests
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
@@ -156,5 +157,28 @@ async def youtube(ctx: discord.Interaction, url: str):
 @app_commands.describe(url="The Instagram reel URL")
 async def instagram(ctx: discord.Interaction, url: str):
     await handle_video(ctx, url, "instagram")
+
+@bot.tree.command(name="sport")
+async def sport(ctx: discord.Interaction):
+    await ctx.response.defer()
+    
+    url = "https://allsportsapi2.p.rapidapi.com/api/match/11599678/team/1963/heatmap"
+    headers = {
+        "x-rapidapi-key": "5e6976078bmsheb89f5f8d17f7d4p1b5895jsnb31e587ad8cc",
+        "x-rapidapi-host": "allsportsapi2.p.rapidapi.com"
+    }
+    
+    try:
+        response = requests.get(url, headers=headers)
+        data = response.json()
+        print(f"Sports API response: {data}")
+        
+        if response.status_code == 200:
+            await ctx.followup.send(f"Sports API data: {json.dumps(data, indent=4)}")
+        else:
+            await ctx.followup.send("Failed to retrieve sports data.")
+    
+    except Exception as e:
+        await ctx.followup.send(f"An error occurred while retrieving sports data: {str(e)}")
 
 bot.run(DISCORD_BOT_TOKEN)
