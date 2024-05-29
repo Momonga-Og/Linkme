@@ -5,8 +5,6 @@ import yt_dlp
 import os
 import asyncio
 import subprocess
-import http.client
-import json
 import requests
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
@@ -70,11 +68,9 @@ async def run_ffmpeg_command(command):
         raise subprocess.CalledProcessError(process.returncode, command, output=stdout, stderr=stderr)
 
 def get_instagram_reel_url(url):
-    # Replace with a better API if available
-    # Example with another RapidAPI service
     api_url = f"https://instagram-downloader-rapidapi.p.rapidapi.com/rapidapi?url={url}"
     headers = {
-        'x-rapidapi-key': "5e6976078bmsheb89f5f8d17f7d4p1b5895jsnb31e587ad8cc",  # Replace with your RapidAPI key
+        'x-rapidapi-key': "5e6976078bmsheb89f5f8d17f7d4p1b5895jsnb31e587ad8cc",
         'x-rapidapi-host': "instagram-downloader-rapidapi.p.rapidapi.com"
     }
     response = requests.get(api_url, headers=headers)
@@ -84,9 +80,6 @@ def get_instagram_reel_url(url):
         return data['media']
     else:
         print(f"Error: {data.get('message', 'Failed to retrieve video URL')}")
-        return None
-
-    else:
         return None
 
 async def handle_video(ctx, url, source):
@@ -138,7 +131,6 @@ async def handle_video(ctx, url, source):
     except Exception as e:
         await ctx.followup.send(f"An error occurred: {str(e)}")
 
-
 def split_message(text, max_length=2000):
     return [text[i:i+max_length] for i in range(0, len(text), max_length)]
 
@@ -160,30 +152,5 @@ async def youtube(ctx: discord.Interaction, url: str):
 @app_commands.describe(url="The Instagram reel URL")
 async def instagram(ctx: discord.Interaction, url: str):
     await handle_video(ctx, url, "instagram")
-
-
-@bot.tree.command(name="sport")
-async def sport(ctx: discord.Interaction):
-    await ctx.response.defer()
-    
-    url = "https://allsportsapi2.p.rapidapi.com/api/match/11599678/team/1963/heatmap"
-    headers = {
-        "x-rapidapi-key": "5e6976078bmsheb89f5f8d17f7d4p1b5895jsnb31e587ad8cc",
-        "x-rapidapi-host": "allsportsapi2.p.rapidapi.com"
-    }
-    
-    try:
-        response = requests.get(url, headers=headers)
-        data = response.json()
-        print(f"Sports API response: {data}")
-        
-        if response.status_code == 200:
-            formatted_data = json.dumps(data, indent=4)
-            await send_long_message(ctx, formatted_data)
-        else:
-            await ctx.followup.send("Failed to retrieve sports data.")
-    
-    except Exception as e:
-        await ctx.followup.send(f"An error occurred while retrieving sports data: {str(e)}")
 
 bot.run(DISCORD_BOT_TOKEN)
