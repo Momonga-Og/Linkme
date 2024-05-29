@@ -70,27 +70,22 @@ async def run_ffmpeg_command(command):
         raise subprocess.CalledProcessError(process.returncode, command, output=stdout, stderr=stderr)
 
 def get_instagram_reel_url(url):
-    conn = http.client.HTTPSConnection("instagram-looter2.p.rapidapi.com")
+    # Replace with a better API if available
+    # Example with another RapidAPI service
+    api_url = f"https://instagram-downloader-rapidapi.p.rapidapi.com/rapidapi?url={url}"
     headers = {
         'x-rapidapi-key': "5e6976078bmsheb89f5f8d17f7d4p1b5895jsnb31e587ad8cc",  # Replace with your RapidAPI key
-        'x-rapidapi-host': "instagram-looter2.p.rapidapi.com"
+        'x-rapidapi-host': "instagram-downloader-rapidapi.p.rapidapi.com"
     }
-    endpoint = f"/profile2?id={url}"
-    conn.request("GET", endpoint, headers=headers)
-    res = conn.getresponse()
-    data = res.read().decode("utf-8")
-    
-    print(f"Response status: {res.status}")
-    print(f"Response data: {data}")
-    
-    if res.status == 200:
-        response_json = json.loads(data)
-        print(f"Response JSON: {response_json}")
-        if 'result' in response_json and 'video_url' in response_json['result']:
-            return response_json['result']['video_url']
-        else:
-            print("Error: 'result' or 'video_url' not found in response JSON")
-            return None
+    response = requests.get(api_url, headers=headers)
+    data = response.json()
+
+    if response.status_code == 200 and 'media' in data:
+        return data['media']
+    else:
+        print(f"Error: {data.get('message', 'Failed to retrieve video URL')}")
+        return None
+
     else:
         return None
 
@@ -118,7 +113,7 @@ async def handle_video(ctx, url, source):
         file_size = os.path.getsize(file_path)
         if file_size > 8 * 1024 * 1024:  # 8MB in bytes
             await ctx.followup.send("The video is larger than 8MB, compressing the video...")
-            compressed_file_path = "compressed_" + os.path.splitext(file_path)[0] + ".mp4"
+            compressed_file_path = f"compressed_{os.path.splitext(file_path)[0]}.mp4"
             ffmpeg_command = [
                 'ffmpeg', '-i', file_path, '-vf', f'scale={compression_settings["scale"]}', '-c:v', 'libx264',
                 '-preset', compression_settings["preset"], '-b:v', compression_settings["bitrate"],
@@ -139,9 +134,10 @@ async def handle_video(ctx, url, source):
         os.remove(file_path)
 
     except discord.errors.NotFound:
-        await ctx.followup.send(f"An error occurred: Unknown interaction")
+        await ctx.followup.send("An error occurred: Unknown interaction")
     except Exception as e:
         await ctx.followup.send(f"An error occurred: {str(e)}")
+
 
 def split_message(text, max_length=2000):
     return [text[i:i+max_length] for i in range(0, len(text), max_length)]
@@ -164,6 +160,7 @@ async def youtube(ctx: discord.Interaction, url: str):
 @app_commands.describe(url="The Instagram reel URL")
 async def instagram(ctx: discord.Interaction, url: str):
     await handle_video(ctx, url, "instagram")
+
 
 @bot.tree.command(name="sport")
 async def sport(ctx: discord.Interaction):
