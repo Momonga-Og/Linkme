@@ -39,10 +39,11 @@ source_settings = {
             "audio_bitrate": "96k"
         }
     },
-    "instagram": {  # Replaced Facebook with Instagram
+    "instagram": {
         "ydl_opts": {
             'format': 'bestvideo+bestaudio/best',
-            'outtmpl': 'downloaded_video.%(ext)s'
+            'outtmpl': 'downloaded_video.%(ext)s',
+            'cookiefile': INSTAGRAM_COOKIES_PATH,
         },
         "compression_settings": {
             "scale": "720:-1",
@@ -52,6 +53,7 @@ source_settings = {
         }
     }
 }
+
 
 @bot.event
 async def on_ready():
