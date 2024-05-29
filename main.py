@@ -25,7 +25,7 @@ def get_instagram_media_url(media_id):
     return media_data.get('media_url')
 
 async def handle_video(interaction, url, source):
-    await interaction.response.defer()
+    await interaction.response.defer(ephemeral=True)
     try:
         if source == "Instagram":
             media_id = url.split('/')[-2]
