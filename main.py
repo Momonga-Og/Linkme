@@ -9,7 +9,7 @@ DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='!', intents=discord.Intents.default())
 
 # yt-dlp options for downloading the video
 ydl_opts = {
@@ -19,12 +19,11 @@ ydl_opts = {
 
 @bot.event
 async def on_ready():
-    await bot.tree.sync()
-    print(f'Logged in as {bot.user.name}')
+    print(f'Logged in as {bot.user}')
 
 # Function to handle video downloading and uploading
-async def handle_video(interaction, url, source):
-    await interaction.response.send_message(f"Downloading the video from {source}...")
+async def handle_video(interaction: discord.Interaction, url: str, source: str):
+    await interaction.followup.send(f"Downloading the video from {source}...")
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -65,9 +64,20 @@ async def tiktok(interaction: discord.Interaction, url: str):
     await handle_video(interaction, url, "TikTok")
 
 @bot.tree.command(name="youtube")
-@app_commands.describe(url="The YouTube video URL")
 async def youtube(interaction: discord.Interaction, url: str):
-    await handle_video(interaction, url, "YouTube")
+    try:
+        # Defer the interaction response to give more time for processing
+        await interaction.response.defer()
+        await handle_video(interaction, url, "YouTube")
+    except discord.errors.NotFound as e:
+        await interaction.followup.send(f"Failed to send message: {e}")
+    except Exception as e:
+        await interaction.followup.send(f"An error occurred: {e}")
+
+# Add the command to the bot
+bot.tree.add_command(youtube)
+
+
 
 # Add your token at the end to run the bot
 bot.run(DISCORD_BOT_TOKEN)
