@@ -69,12 +69,12 @@ async def run_ffmpeg_command(command):
         raise subprocess.CalledProcessError(process.returncode, command, output=stdout, stderr=stderr)
 
 def get_instagram_reel_url(url):
-    conn = http.client.HTTPSConnection("instagram-downloader.p.rapidapi.com")
+    conn = http.client.HTTPSConnection("instagram-looter2.p.rapidapi.com")
     headers = {
         'x-rapidapi-key': "5e6976078bmsheb89f5f8d17f7d4p1b5895jsnb31e587ad8cc",  # Replace with your RapidAPI key
-        'x-rapidapi-host': "instagram-downloader.p.rapidapi.com"
+        'x-rapidapi-host': "instagram-looter2.p.rapidapi.com"
     }
-    endpoint = f"/index?url={url}"
+    endpoint = f"/profile2?id={url}"
     conn.request("GET", endpoint, headers=headers)
     res = conn.getresponse()
     data = res.read().decode("utf-8")
