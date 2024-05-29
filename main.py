@@ -3,7 +3,6 @@ from discord.ext import commands
 from discord import app_commands
 import requests
 import os
-import subprocess
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
@@ -25,7 +24,7 @@ def get_instagram_media_url(media_id):
     return media_data.get('media_url')
 
 async def handle_video(interaction, url, source):
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer()  # Defer the interaction to acknowledge it immediately
     try:
         if source == "Instagram":
             media_id = url.split('/')[-2]
@@ -38,7 +37,9 @@ async def handle_video(interaction, url, source):
             video_filename = 'downloaded_video.mp4'
             with open(video_filename, 'wb') as video_file:
                 video_file.write(video_response.content)
-            
+
+            await interaction.followup.send("Video downloaded successfully. Processing...")
+
             file_path = video_filename
             title = "Instagram Video"
 
