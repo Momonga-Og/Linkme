@@ -38,7 +38,7 @@ source_settings = {
             "audio_bitrate": "96k"
         }
     },
-    "instagram": {
+    "instagram": {  # Replaced Facebook with Instagram
         "ydl_opts": {
             'format': 'bestvideo+bestaudio/best',
             'outtmpl': 'downloaded_video.%(ext)s'
