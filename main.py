@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import yt_dlp
+import instaloader
 import os
 import subprocess
 
@@ -27,10 +28,27 @@ async def handle_video(interaction, url, source):
     await interaction.response.send_message(f"Downloading the video from {source}...")
 
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            file_path = ydl.prepare_filename(info)
-            title = info.get('title', 'Unknown Title')
+        if source == "Instagram":
+            L = instaloader.Instaloader()
+            post = instaloader.Post.from_shortcode(L.context, url.split('/')[-2])
+
+            video_url = None
+            for file in L.download_post(post, target='downloads'):
+                if file.endswith('.mp4'):
+                    video_url = file
+                    break
+
+            if not video_url:
+                await interaction.followup.send("No video found in the provided URL.")
+                return
+
+            file_path = video_url
+            title = post.title if post.title else "Unknown Title"
+        else:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                file_path = ydl.prepare_filename(info)
+                title = info.get('title', 'Unknown Title')
 
         # Check the file size
         file_size = os.path.getsize(file_path)
@@ -69,6 +87,10 @@ async def tiktok(interaction: discord.Interaction, url: str):
 async def youtube(interaction: discord.Interaction, url: str):
     await handle_video(interaction, url, "YouTube")
 
+@bot.tree.command(name="instagram")
+@app_commands.describe(url="The Instagram video URL")
+async def instagram(interaction: discord.Interaction, url: str):
+    await handle_video(interaction, url, "Instagram")
+
 # Add your token at the end to run the bot
 bot.run(DISCORD_BOT_TOKEN)
-
