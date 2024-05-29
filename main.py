@@ -9,8 +9,6 @@ import subprocess
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 INSTAGRAM_COOKIES_PATH = 'instagram_cookies.txt'
 
-import subprocess
-
 def download_instagram_video(url):
     try:
         result = subprocess.run(
@@ -26,29 +24,6 @@ def download_instagram_video(url):
         print(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"Error: {e.stderr}")
-
-if __name__ == "__main__":
-    urls = [
-        "https://www.instagram.com/reel/C5hAGZEov5X/?utm_source=ig_web_copy_link",
-        "https://www.instagram.com/reel/C7bXWfVy7Ie/?utm_source=ig_web_copy_link"
-    ]
-
-    for url in urls:
-        download_instagram_video(url)
-
-
-
-
-
-
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
-
-@bot.event
-async def on_ready():
-    await bot.tree.sync()
-    print(f'Logged in as {bot.user.name}')
 
 async def run_ffmpeg_command(command):
     process = await asyncio.create_subprocess_exec(
@@ -144,6 +119,15 @@ async def handle_tiktok(ctx, url):
         os.remove(file_path)
     except Exception as e:
         await ctx.followup.send(f"An error occurred: {str(e)}")
+
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+@bot.event
+async def on_ready():
+    await bot.tree.sync()
+    print(f'Logged in as {bot.user.name}')
 
 @bot.tree.command(name="instagram")
 @app_commands.describe(url="The Instagram reel URL")
