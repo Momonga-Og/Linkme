@@ -79,9 +79,17 @@ def get_instagram_reel_url(url):
     res = conn.getresponse()
     data = res.read().decode("utf-8")
     
+    print(f"Response status: {res.status}")
+    print(f"Response data: {data}")
+    
     if res.status == 200:
         response_json = json.loads(data)
-        return response_json['result']['video_url']
+        print(f"Response JSON: {response_json}")
+        if 'result' in response_json and 'video_url' in response_json['result']:
+            return response_json['result']['video_url']
+        else:
+            print("Error: 'result' or 'video_url' not found in response JSON")
+            return None
     else:
         return None
 
