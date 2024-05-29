@@ -62,18 +62,15 @@ async def handle_video(ctx, url, source):
     except Exception as e:
         await ctx.followup.send(f"An error occurred: {str(e)}")
 
-@bot.tree.command(name="instagram")
-@app_commands.describe(url="The Instagram reel URL")
+@bot.command(name="instagram")
 async def instagram(ctx: discord.Interaction, url: str):
     await handle_video(ctx, url, "Instagram")
 
-@bot.tree.command(name="youtube")
-@app_commands.describe(url="The YouTube video URL")
+@bot.command(name="youtube")
 async def youtube(ctx: discord.Interaction, url: str):
     await handle_video(ctx, url, "YouTube")
 
-@bot.tree.command(name="tiktok")
-@app_commands.describe(url="The TikTok video URL")
+@bot.command(name="tiktok")
 async def tiktok(ctx: discord.Interaction, url: str):
     await handle_video(ctx, url, "TikTok")
 
