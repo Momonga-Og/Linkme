@@ -9,6 +9,38 @@ import subprocess
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 INSTAGRAM_COOKIES_PATH = 'instagram_cookies.txt'
 
+import subprocess
+
+def download_instagram_video(url):
+    try:
+        result = subprocess.run(
+            [
+                'yt-dlp',
+                '--cookies', 'instagram_cookies.txt',  # Use the cookies file
+                url
+            ],
+            check=True,
+            text=True,
+            capture_output=True
+        )
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e.stderr}")
+
+if __name__ == "__main__":
+    urls = [
+        "https://www.instagram.com/reel/C5hAGZEov5X/?utm_source=ig_web_copy_link",
+        "https://www.instagram.com/reel/C7bXWfVy7Ie/?utm_source=ig_web_copy_link"
+    ]
+
+    for url in urls:
+        download_instagram_video(url)
+
+
+
+
+
+
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
