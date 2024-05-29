@@ -68,12 +68,13 @@ async def run_ffmpeg_command(command):
         raise subprocess.CalledProcessError(process.returncode, command, output=stdout, stderr=stderr)
 
 def get_instagram_reel_url(url):
-    api_url = f"https://instagram-downloader-rapidapi.p.rapidapi.com/rapidapi?url={url}"
+    api_url = "https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index"
+    querystring = {"url": url}
     headers = {
-        'x-rapidapi-key': "5e6976078bmsheb89f5f8d17f7d4p1b5895jsnb31e587ad8cc",
-        'x-rapidapi-host': "instagram-downloader-rapidapi.p.rapidapi.com"
+        "x-rapidapi-key": "5e6976078bmsheb89f5f8d17f7d4p1b5895jsnb31e587ad8cc",
+        "x-rapidapi-host": "instagram-downloader-download-instagram-videos-stories.p.rapidapi.com"
     }
-    response = requests.get(api_url, headers=headers)
+    response = requests.get(api_url, headers=headers, params=querystring)
     data = response.json()
 
     if response.status_code == 200 and 'media' in data:
