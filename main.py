@@ -3,8 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import requests
 import os
-import subprocess  # Add this import
-import asyncio  # Add this import for async handling
+import subprocess
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
@@ -26,8 +25,7 @@ def get_instagram_media_url(media_id):
     return media_data.get('media_url')
 
 async def handle_video(interaction, url, source):
-    await interaction.response.send_message(f"Downloading the video from {source}...")
-
+    await interaction.response.defer()
     try:
         if source == "Instagram":
             media_id = url.split('/')[-2]
