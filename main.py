@@ -143,6 +143,13 @@ async def handle_video(ctx, url, source):
     except Exception as e:
         await ctx.followup.send(f"An error occurred: {str(e)}")
 
+def split_message(text, max_length=2000):
+    return [text[i:i+max_length] for i in range(0, len(text), max_length)]
+
+async def send_long_message(ctx, text):
+    for chunk in split_message(text):
+        await ctx.followup.send(chunk)
+
 @bot.tree.command(name="tiktok")
 @app_commands.describe(url="The TikTok video URL")
 async def tiktok(ctx: discord.Interaction, url: str):
@@ -174,7 +181,8 @@ async def sport(ctx: discord.Interaction):
         print(f"Sports API response: {data}")
         
         if response.status_code == 200:
-            await ctx.followup.send(f"Sports API data: {json.dumps(data, indent=4)}")
+            formatted_data = json.dumps(data, indent=4)
+            await send_long_message(ctx, formatted_data)
         else:
             await ctx.followup.send("Failed to retrieve sports data.")
     
