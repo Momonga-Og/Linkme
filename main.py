@@ -30,7 +30,11 @@ async def handle_video(interaction, url, source):
     try:
         if source == "Instagram":
             L = instaloader.Instaloader()
-            post = instaloader.Post.from_shortcode(L.context, url.split('/')[-2])
+            try:
+                post = instaloader.Post.from_shortcode(L.context, url.split('/')[-2])
+            except Exception as e:
+                await interaction.followup.send(f"An error occurred: {str(e)}")
+                return
 
             video_url = None
             for file in L.download_post(post, target='downloads'):
