@@ -23,8 +23,8 @@ async def on_ready():
     print(f'Logged in as {bot.user.name}')
 
 # Function to handle video downloading and uploading
-async def handle_video(ctx, url, source):
-    await ctx.response.send_message(f"Downloading the video from {source}...")
+async def handle_video(interaction, url, source):
+    await interaction.response.send_message(f"Downloading the video from {source}...")
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -35,7 +35,7 @@ async def handle_video(ctx, url, source):
         # Check the file size
         file_size = os.path.getsize(file_path)
         if file_size > 8 * 1024 * 1024:  # 8MB in bytes
-            await ctx.followup.send("The video is larger than 8MB, compressing the video...")
+            await interaction.followup.send("The video is larger than 8MB, compressing the video...")
 
             # Compress the video using ffmpeg
             compressed_file_path = "compressed_" + os.path.splitext(file_path)[0] + ".mp4"
@@ -50,24 +50,24 @@ async def handle_video(ctx, url, source):
             file_path = compressed_file_path
 
         # Send the video file to Discord
-        await ctx.followup.send(f"Uploading video: **{title}**")
-        await ctx.followup.send(file=discord.File(file_path))
+        await interaction.followup.send(f"Uploading video: **{title}**")
+        await interaction.followup.send(file=discord.File(file_path))
 
         # Clean up the downloaded and/or compressed file
         os.remove(file_path)
 
     except Exception as e:
-        await ctx.followup.send(f"An error occurred: {str(e)}")
+        await interaction.followup.send(f"An error occurred: {str(e)}")
 
 @bot.tree.command(name="tiktok")
 @app_commands.describe(url="The TikTok video URL")
-async def tiktok(ctx: discord.Interaction, url: str):
-    await handle_video(ctx, url, "TikTok")
+async def tiktok(interaction: discord.Interaction, url: str):
+    await handle_video(interaction, url, "TikTok")
 
 @bot.tree.command(name="youtube")
 @app_commands.describe(url="The YouTube video URL")
-async def youtube(ctx: discord.Interaction, url: str):
-    await handle_video(ctx, url, "YouTube")
+async def youtube(interaction: discord.Interaction, url: str):
+    await handle_video(interaction, url, "YouTube")
 
 # Add your token at the end to run the bot
 bot.run(DISCORD_BOT_TOKEN)
