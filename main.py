@@ -1,76 +1,137 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import requests
+import yt_dlp
 import os
+import asyncio
+import subprocess
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+# Define yt-dlp options and other settings for each source
+source_settings = {
+    "youtube": {
+        "ydl_opts": {
+            'format': 'bestvideo+bestaudio/best',
+            'outtmpl': 'downloaded_video.%(ext)s'
+        },
+        "compression_settings": {
+            "scale": "640:-1",
+            "preset": "fast",
+            "bitrate": "500k",
+            "audio_bitrate": "128k"
+        }
+    },
+    "tiktok": {
+        "ydl_opts": {
+            'format': 'bestvideo+bestaudio/best',
+            'outtmpl': 'downloaded_video.%(ext)s'
+        },
+        "compression_settings": {
+            "scale": "480:-1",
+            "preset": "fast",
+            "bitrate": "400k",
+            "audio_bitrate": "96k"
+        }
+    },
+    "instagram": {
+        "ydl_opts": {
+            'format': 'bestvideo+bestaudio/best',
+            'outtmpl': 'downloaded_video.%(ext)s'
+        },
+        "compression_settings": {
+            "scale": "720:-1",
+            "preset": "fast",
+            "bitrate": "600k",
+            "audio_bitrate": "128k"
+        }
+    }
+}
 
 @bot.event
 async def on_ready():
     await bot.tree.sync()
     print(f'Logged in as {bot.user.name}')
 
-def get_instagram_media_url(media_id):
-    url = f'https://graph.instagram.com/{media_id}?fields=id,media_type,media_url,thumbnail_url,timestamp,username&access_token={INSTAGRAM_ACCESS_TOKEN}'
-    response = requests.get(url)
-    response.raise_for_status()
-    media_data = response.json()
-    return media_data.get('media_url')
+# Function to run ffmpeg asynchronously
+async def run_ffmpeg_command(command):
+    process = await asyncio.create_subprocess_exec(
+        *command,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, command, output=stdout, stderr=stderr)
 
-async def handle_video(interaction, url, source):
-    await interaction.response.defer()  # Defer the interaction to acknowledge it immediately
+# Function to handle video downloading and uploading
+async def handle_video(ctx, url, source):
+    settings = source_settings[source]
+    ydl_opts = settings["ydl_opts"]
+    compression_settings = settings["compression_settings"]
+
     try:
-        if source == "Instagram":
-            media_id = url.split('/')[-2]
-            video_url = get_instagram_media_url(media_id)
-            if not video_url:
-                await interaction.followup.send("No video found in the provided URL.")
+        await ctx.response.defer()
+
+        await ctx.followup.send(f"Downloading the video from {source}...")
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            file_path = ydl.prepare_filename(info)
+            title = info.get('title', 'Unknown Title')
+
+        # Check the file size
+        file_size = os.path.getsize(file_path)
+        if file_size > 8 * 1024 * 1024:  # 8MB in bytes
+            await ctx.followup.send("The video is larger than 8MB, compressing the video...")
+
+            # Compress the video using ffmpeg with the source-specific settings
+            compressed_file_path = "compressed_" + os.path.splitext(file_path)[0] + ".mp4"
+            ffmpeg_command = [
+                'ffmpeg', '-i', file_path, '-vf', f'scale={compression_settings["scale"]}', '-c:v', 'libx264', 
+                '-preset', compression_settings["preset"], '-b:v', compression_settings["bitrate"],
+                '-c:a', 'aac', '-b:a', compression_settings["audio_bitrate"], compressed_file_path
+            ]
+            try:
+                await run_ffmpeg_command(ffmpeg_command)
+            except subprocess.CalledProcessError as e:
+                await ctx.followup.send(f"An error occurred while compressing the video: {e.stderr.decode()}")
                 return
 
-            video_response = requests.get(video_url)
-            video_filename = 'downloaded_video.mp4'
-            with open(video_filename, 'wb') as video_file:
-                video_file.write(video_response.content)
-
-            await interaction.followup.send("Video downloaded successfully. Processing...")
-
-            file_path = video_filename
-            title = "Instagram Video"
-
-            file_size = os.path.getsize(file_path)
-            if file_size > 8 * 1024 * 1024:  # 8MB in bytes
-                await interaction.followup.send("The video is larger than 8MB, compressing the video...")
-
-                compressed_file_path = "compressed_" + file_path
-                ffmpeg_command = [
-                    'ffmpeg', '-i', file_path, '-vf', 'scale=640:-1', '-c:v', 'libx264', '-preset', 'slow', '-b:v', '500k',
-                    '-c:a', 'aac', '-b:a', '128k', compressed_file_path
-                ]
-                subprocess.run(ffmpeg_command, check=True)
-
-                os.remove(file_path)
-                file_path = compressed_file_path
-
-            await interaction.followup.send(f"Uploading video: **{title}**")
-            await interaction.followup.send(file=discord.File(file_path))
-
+            # Remove the original file and replace with the compressed file
             os.remove(file_path)
+            file_path = compressed_file_path
 
-        else:
-            await interaction.followup.send(f"Unsupported source: {source}")
+        # Send the video file to Discord
+        await ctx.followup.send(f"Uploading video: **{title}**")
+        await ctx.followup.send(file=discord.File(file_path))
 
+        # Clean up the downloaded and/or compressed file
+        os.remove(file_path)
+
+    except discord.errors.NotFound:
+        await ctx.followup.send(f"An error occurred: Unknown interaction")
     except Exception as e:
-        await interaction.followup.send(f"An error occurred: {str(e)}")
+        await ctx.followup.send(f"An error occurred: {str(e)}")
+
+@bot.tree.command(name="tiktok")
+@app_commands.describe(url="The TikTok video URL")
+async def tiktok(ctx: discord.Interaction, url: str):
+    await handle_video(ctx, url, "tiktok")
+
+@bot.tree.command(name="youtube")
+@app_commands.describe(url="The YouTube video URL")
+async def youtube(ctx: discord.Interaction, url: str):
+    await handle_video(ctx, url, "youtube")
 
 @bot.tree.command(name="instagram")
-@app_commands.describe(url="The Instagram video URL")
-async def instagram(interaction: discord.Interaction, url: str):
-    await handle_video(interaction, url, "Instagram")
+@app_commands.describe(url="The Instagram reel URL")
+async def instagram(ctx: discord.Interaction, url: str):
+    await handle_video(ctx, url, "instagram")
 
+# Add your token at the end to run the bot
 bot.run(DISCORD_BOT_TOKEN)
